@@ -1,3 +1,5 @@
+from itertools import combinations
+
 class Apriori:
     def __init__(self, min_sup: int = None, min_conf: float = None):
         self.__min_sup = min_sup
@@ -17,12 +19,14 @@ class Apriori:
     def run(self, row_data: list = [], unique_items = None):
         self.__row_data = row_data
         self.__unique_items = unique_items
-
         self.__find_frequent_sets()
-        # self.__find_strong_association_rules()
+        self.__find_strong_association_rules()
 
+        # Return an object of all strong association rules with calculated metrics
 
-        # print(unique_items)
+        print(self.__strong_association_rules)
+
+        # return self.__strong_association_rules
     
     def __find_frequent_sets(self):
         self.__frequent_sets = {}
@@ -51,17 +55,32 @@ class Apriori:
                         if len(new_candidate) == current_level + 1:
                             if self.__is_frequent(new_candidate):
                                 self.__add_frequent_set(new_candidate)
-            print(f"    |---- {len(self.__frequent_sets[current_level])} frequent sets found.")
+            print(f"    |---- Done. found {len(self.__frequent_sets[current_level])}.")
             current_level += 1
 
-        print(self.__get_frequent_sets(5))
-
     def __find_strong_association_rules(self):
-        self.__strong_association_rules = []
         if self.__frequent_sets == None or len(self.__frequent_sets) == 0:
             return
-        
-        pass
+
+        self.__strong_association_rules = []
+        current_level = 1
+        while current_level in self.__frequent_sets:
+            n = 0
+            print(f"[INFO] Searching for strong rules of size {current_level}.")
+            current_level_frequent_sets = self.__get_frequent_sets(current_level)      
+
+            for frequent_set in current_level_frequent_sets:
+                all_rule_combinations = self.__generate_combinations(frequent_set)
+
+                for rule in all_rule_combinations:
+                    if self.__is_strong_ar(rule[0], rule[1]):
+                        self.__strong_association_rules.append(rule)
+                        n += 1
+            
+            print(f"    |---- Done. Found {n}.")
+            current_level += 1
+
+        print(f"[INFO] {len(self.__strong_association_rules)} strong association rules found in total.")
 
     def __get_frequent_sets(self, size: int):
         if size not in self.__frequent_sets:
@@ -81,6 +100,13 @@ class Apriori:
             self.__frequent_sets[size] = {frozenset(X)}
         else:
             self.__frequent_sets[size].add(frozenset(X))
+
+    def __generate_combinations(self, X: set):
+        all_combinations = []
+        for r in range(1, len(X)):
+            for subset in combinations(X, r):
+                all_combinations.append((set(subset), X - set(subset)))
+        return all_combinations
 
     def __is_frequent(self, X: set):
         return True if self.__sup(X) >= self.__min_sup else False

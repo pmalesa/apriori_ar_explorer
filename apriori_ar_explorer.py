@@ -14,10 +14,10 @@ def main(filepath: str):
     adp = AprioriDataProcessor()
     parameters = {
         "min_sup": 50,
-        "min_conf": 0.5
+        "min_conf": 0.65
     }
     adp.set_parameters(parameters)
-    adp.run(filepath, True, True)
+    adp.run(filepath, False, False)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Run the script by choosing the specific model to test.")
