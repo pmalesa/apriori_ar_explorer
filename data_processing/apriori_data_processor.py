@@ -107,13 +107,3 @@ class AprioriDataProcessor:
         for index, row in self.__df.iterrows():
             row_set = {f"{meta.names()[i]}={row.iloc[i]}" for i in range(len(meta.names()))}
             self.__raw_rows.append(row_set)
-
-### TODO ###
-        
-# 2) Zaimplementuj Apriori (najpierw wyszukaj częste zbiory a potem silne reguły na podstawie minSup i minConf)
-# 3) Ogarnij liczenie tych metryk dla odkrytych silnych i częstych reguł asocjacyjnych:
-#       - cosine,
-#       - Jaccard,
-#       - odds_ratio,
-# 4) Zwróć wyniki do okna gui z wynikiami
-# 5) Zrób gui do wpisywania parametrów wejściowych

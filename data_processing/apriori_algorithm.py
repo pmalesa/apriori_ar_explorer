@@ -1,4 +1,5 @@
 from itertools import combinations
+import math
 
 class Apriori:
     def __init__(self, min_sup: int = None, min_conf: float = None):
@@ -14,20 +15,33 @@ class Apriori:
         self.__sup_cache = {}
         self.__conf_cache = {}
 
-        # self.__vectorized_data = []
+        self.__n_transactions = 0
 
     def run(self, row_data: list = [], unique_items = None):
         self.__row_data = row_data
+        self.__n_transactions = len(self.__row_data)
         self.__unique_items = unique_items
         self.__find_frequent_sets()
         self.__find_strong_association_rules()
 
         # Return an object of all strong association rules with calculated metrics
 
-        print(self.__strong_association_rules)
+        rule = self.__strong_association_rules[0]
+        print(self.__strong_association_rules[0])
+        print(f"SUP: {self.__sup(rule[0] | rule[1])}")
+        print(f"rSUP: {self.__rsup(rule[0] | rule[1])}")
+        print(f"CONF: {self.__conf(rule[0], rule[1])}")
+        print(f"LIFT: {self.__lift(rule[0], rule[1])}")
+        print(f"COSINE: {self.__cosine(rule[0], rule[1])}")
+        print(f"JACCARD: {self.__jaccard(rule[0], rule[1])}")
+        print(f"CF: {self.__certainty_factor(rule[0], rule[1])}")
 
         # return self.__strong_association_rules
     
+    # TODO
+    def __create_list_of_strong_rules_with_metrics(self):
+        pass
+
     def __find_frequent_sets(self):
         self.__frequent_sets = {}
 
@@ -138,6 +152,9 @@ class Apriori:
         self.__sup_cache[frozenset(union)] = sup
 
         return sup
+    
+    def __rsup(self, X: set, Y = None) -> float:
+        return self.__sup(X, Y) / self.__n_transactions
 
     def __conf(self, X: set, Y: set):
         if X == None or Y == None:
@@ -160,3 +177,57 @@ class Apriori:
         self.__conf_cache[rule] = conf
 
         return conf
+    
+    def __lift(self, X: set, Y: set):
+        if X == None or Y == None:
+            return -1
+        
+        if len(X) == 0:
+            X = set()
+        if len(Y) == 0:
+            Y = set()
+
+        lift = self.__conf(X, Y) / self.__rsup(Y)
+
+        return lift
+    
+    def __cosine(self, X: set, Y: set):
+        if X == None or Y == None:
+            return -1
+        
+        if len(X) == 0:
+            X = set()
+        if len(Y) == 0:
+            Y = set()
+
+        return self.__rsup(X, Y) / math.sqrt(self.__rsup(X) * self.__rsup(Y))
+
+    def __jaccard(self, X: set, Y: set):
+        if X == None or Y == None:
+            return -1
+        
+        if len(X) == 0:
+            X = set()
+        if len(Y) == 0:
+            Y = set()
+
+        return self.__rsup(X, Y) / (self.__rsup(X) + self.__rsup(Y) - self.__rsup(X, Y))
+
+    def __certainty_factor(self, X: set, Y: set):
+        if X == None or Y == None:
+            return -1
+        
+        if len(X) == 0:
+            X = set()
+        if len(Y) == 0:
+            Y = set()
+
+        prob_Y = self.__rsup(Y)
+        conf_XY = self.__conf(X, Y)
+
+        if conf_XY > prob_Y:
+            return (conf_XY - prob_Y) / (1 - prob_Y)
+        elif conf_XY == prob_Y:
+            return 0
+        else:
+            return -1 * ((prob_Y - conf_XY) / prob_Y)
