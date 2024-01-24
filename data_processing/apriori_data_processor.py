@@ -1,13 +1,14 @@
 import pandas as pd
-import numpy as numpy
+import numpy as np
 import csv
 from scipy.io import arff
+import matplotlib.pyplot as plt
 
 from data_processing.apriori_algorithm import Apriori
 
 class AprioriDataProcessor:
     def __init__(self):
-        self.__raw_rows = [] # list of sets
+        self.__raw_rows = []
         self.__df: pd.DataFrame = None
         self.__dimension = 0
         self.__unique_items = None
@@ -15,14 +16,17 @@ class AprioriDataProcessor:
         self.__supported_datafiles = {"csv", "arff"}
         self.__parameters = {}
 
+        self.__rules = []
+
     def set_parameters(self, parameters: dict = {}):
         if parameters == {}:
             print(f"[ERROR] Passed parameters are empty!")
             return
         self.__parameters = parameters
 
-    def run(self, filepath: str, fixed_length = True, ommit_first_column = True):
+    def process_data(self, filepath: str, fixed_length = True, ommit_first_column = True):
         self.__load_data_file(filepath, fixed_length, ommit_first_column)
+
         if self.__raw_rows == None or self.__raw_rows == []:
             print(f"[ERROR] Could not run the processing. Data was not loaded!")
             return
@@ -44,10 +48,66 @@ class AprioriDataProcessor:
             min_sup = self.__parameters["min_sup"],
             min_conf = self.__parameters["min_conf"]
         )
-        results = ap.run(self.__raw_rows, self.__unique_items)
+        self.__rules = ap.run(self.__raw_rows, self.__unique_items)
+        sorted_rules = sorted(self.__rules, key = lambda x: (-x["sup"], -x["conf"]))
 
-        # Process results
-        # ...
+        return sorted_rules, len(self.__raw_rows)
+    
+    def show_plots(self):
+        if self.__rules == []:
+            return
+
+        supports = []
+        confidences = []
+        lifts = []
+        cosines = []
+        jaccards = []
+        certainty_factors = []
+
+        for rule_data in self.__rules:
+            supports.append(rule_data["sup"])
+            confidences.append(rule_data["conf"])
+            lifts.append(rule_data["lift"])
+            cosines.append(rule_data["cosine"])
+            jaccards.append(rule_data["jaccard"])
+            certainty_factors.append(rule_data["cf"])
+
+        supports_array = np.sort(np.array(supports))
+        confidences_array = np.sort(np.array(confidences))
+        lifts_array = np.sort(np.array(lifts))
+        cosines_array = np.sort(np.array(cosines))
+        jaccards_array = np.sort(np.array(jaccards))
+        certainty_factors_array = np.sort(np.array(certainty_factors))
+
+        # Create subplots
+        fig, axs = plt.subplots(2, 2, figsize = (12, 10))
+
+        # Support vs. Confidence
+        axs[0, 0].scatter(supports_array, confidences_array, color = "blue", s = 10)
+        axs[0, 0].set_title("Support vs. Confidence")
+        axs[0, 0].set_xlabel("Support")
+        axs[0, 0].set_ylabel("Confidence")
+
+        # Lift vs. Cosine
+        axs[0, 1].scatter(lifts_array, cosines_array, color = "green", s = 10)
+        axs[0, 1].set_title("Lift vs. Cosine")
+        axs[0, 1].set_xlabel("Lift")
+        axs[0, 1].set_ylabel("Cosine")
+
+        # Lift vs. Jaccard
+        axs[1, 0].scatter(lifts_array, jaccards_array, color = "red", s = 10)
+        axs[1, 0].set_title("Lift vs. Jaccard")
+        axs[1, 0].set_xlabel("Lift")
+        axs[1, 0].set_ylabel("Jaccard")
+
+        # Lift vs. Certainty Factor
+        axs[1, 1].scatter(lifts_array, certainty_factors_array, color = "purple", s = 10)
+        axs[1, 1].set_title("Lift vs. Certainty Factor")
+        axs[1, 1].set_xlabel("Lift")
+        axs[1, 1].set_ylabel("Certainty Factor")
+
+        plt.tight_layout()
+        plt.show()
 
     def __load_data_file(self, filepath: str, fixed_length = True, ommit_first_column = False):
         ext = filepath.split(".")[-1]

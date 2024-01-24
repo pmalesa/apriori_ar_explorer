@@ -24,23 +24,21 @@ class Apriori:
         self.__find_frequent_sets()
         self.__find_strong_association_rules()
 
-        # Return an object of all strong association rules with calculated metrics
+        rules_data = []
+        for rule in self.__strong_association_rules:
+            rule_data = {
+                "rule": rule,
+                "sup": self.__sup(rule[0] | rule[1]),
+                "rsup": self.__rsup(rule[0] | rule[1]),
+                "conf": self.__conf(rule[0], rule[1]),
+                "lift": self.__lift(rule[0], rule[1]),
+                "cosine": self.__cosine(rule[0], rule[1]),
+                "jaccard": self.__jaccard(rule[0], rule[1]),
+                "cf": self.__certainty_factor(rule[0], rule[1])
+            }
+            rules_data.append(rule_data)
 
-        rule = self.__strong_association_rules[0]
-        print(self.__strong_association_rules[0])
-        print(f"SUP: {self.__sup(rule[0] | rule[1])}")
-        print(f"rSUP: {self.__rsup(rule[0] | rule[1])}")
-        print(f"CONF: {self.__conf(rule[0], rule[1])}")
-        print(f"LIFT: {self.__lift(rule[0], rule[1])}")
-        print(f"COSINE: {self.__cosine(rule[0], rule[1])}")
-        print(f"JACCARD: {self.__jaccard(rule[0], rule[1])}")
-        print(f"CF: {self.__certainty_factor(rule[0], rule[1])}")
-
-        # return self.__strong_association_rules
-    
-    # TODO
-    def __create_list_of_strong_rules_with_metrics(self):
-        pass
+        return rules_data
 
     def __find_frequent_sets(self):
         self.__frequent_sets = {}
